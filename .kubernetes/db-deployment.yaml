@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gtgalone-db
+  labels:
+    app: gtgalone-api
+spec:
+  ports:
+    - port: 3306
+  selector:
+    app: gtgalone-api
+    tier: mariadb
+  clusterIP: None
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gtgalone-db-pv-claim
+  labels:
+    app: gtgalone-api
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: gtgalone-db
+  labels:
+    app: gtgalone-api
+spec:
+  selector:
+    matchLabels:
+      app: gtgalone-api
+      tier: mariadb
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: gtgalone-api
+        tier: mariadb
+    spec:
+      containers:
+      - image: mariadb
+        name: gtgalone-db
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-pass
+              key: password
+        - name: MYSQL_DATABASE
+          value: gtgalone
+        ports:
+        - containerPort: 3306
+          name: mariadb
+        volumeMounts:
+        - name: mariadb-persistent-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mariadb-persistent-storage
+        persistentVolumeClaim:
+          claimName: gtgalone-db-pv-claim

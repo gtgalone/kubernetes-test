@@ -1,0 +1,7 @@
+secretGenerator:
+- name: mariadb-pass
+  literals:
+  - password=DB_PASSWORD
+resources:
+    - db-deployment.yaml
+    - api-deployment.yaml

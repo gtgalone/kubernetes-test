@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gtgalone-api
+  labels:
+    app: gtgalone-api
+spec:
+  type: LoadBalancer
+  selector:
+    app: gtgalone-api
+    tier: api
+  ports:
+    - port: 5000
+      targetPort: 5000
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gtgalone-api-deployment
+  labels:
+    app: gtgalone-api
+spec:
+  selector:
+    matchLabels:
+      app: gtgalone-api
+      tier: api
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: gtgalone-api
+        tier: api
+    spec:
+      containers:
+      - name: gtgalone-api
+        image: gtgalone/gtgalone:api
+        # imagePullPolicy: Never
+        env:
+        - name: DB_HOST
+          value: gtgalone-db
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-pass
+              key: password
+        ports:
+        - containerPort: 5000
+          name: api
+
